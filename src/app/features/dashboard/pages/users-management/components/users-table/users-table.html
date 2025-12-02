@@ -1,0 +1,55 @@
+<div class="overflow-x-auto rounded-lg border border-orange-200 shadow-sm">
+  <table class="w-full">
+    <thead>
+      <!-- Enhanced header with orange gradient -->
+      <tr class="bg-gradient-to-r from-orange-500 to-orange-600 text-white">
+        <th class="px-4 py-3 text-left text-sm font-semibold">ID</th>
+        <th class="px-4 py-3 text-left text-sm font-semibold">Tên người dùng</th>
+        <th class="px-4 py-3 text-left text-sm font-semibold">Email</th>
+        <th class="px-4 py-3 text-left text-sm font-semibold">Họ và tên</th>
+        <th class="px-4 py-3 text-left text-sm font-semibold">Vai trò</th>
+        <th class="px-4 py-3 text-left text-sm font-semibold">Trạng thái</th>
+      </tr>
+    </thead>
+
+    <tbody class="bg-white divide-y divide-orange-100">
+      @for (user of data; track user.id) {
+      <!-- Improved row styling with hover effects -->
+      <tr class="hover:bg-orange-50 transition-colors duration-150">
+        <td class="px-4 py-3 text-sm text-gray-700 font-medium">{{ user.id }}</td>
+        <td class="px-4 py-3 text-sm text-gray-900 font-medium">{{ user.username }}</td>
+        <td class="px-4 py-3 text-sm text-gray-600">{{ user.email }}</td>
+        <td class="px-4 py-3 text-sm text-gray-700">{{ user.firstName }} {{ user.lastName }}</td>
+        <td class="px-4 py-3 text-sm">
+          @if (user.roles && user.roles.length > 0) {
+          <div class="flex flex-wrap gap-1">
+            @for (role of user.roles; track role) {
+            <span class="px-2 py-1 text-xs font-medium bg-orange-100 text-orange-700 rounded-full">
+              {{ role }}
+            </span>
+            }
+          </div>
+          } @else {
+          <span class="text-gray-400 text-xs">Không có</span>
+          }
+        </td>
+        <td class="px-4 py-3 text-sm">
+          <span
+            class="px-3 py-1 text-xs font-medium rounded-full"
+            [class.bg-green-100]="user.active"
+            [class.text-green-700]="user.active"
+            [class.bg-red-100]="!user.active"
+            [class.text-red-700]="!user.active"
+          >
+            {{ user.active ? 'Hoạt động' : 'Vô hiệu' }}
+          </span>
+        </td>
+      </tr>
+      } @empty {
+      <tr>
+        <td colspan="6" class="px-4 py-8 text-center text-gray-500">Không có dữ liệu</td>
+      </tr>
+      }
+    </tbody>
+  </table>
+</div>

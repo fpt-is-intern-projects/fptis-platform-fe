@@ -1,0 +1,70 @@
+<div
+  class="py-20 min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-orange-100 via-white to-orange-200 px-4"
+>
+  <div
+    class="w-full max-w-xl bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl px-10 py-10 flex flex-col items-center gap-6"
+  >
+    <!-- Logo -->
+    <div
+      class="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center shadow-lg"
+    >
+      <svg class="w-9 h-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M13 10V3L4 14h7v7l9-11h-7z"
+        />
+      </svg>
+    </div>
+
+    <div class="text-center">
+      <h1 class="text-3xl font-bold text-gray-800 mb-1">FPT IS Platform</h1>
+      <p class="text-gray-600 text-sm">Cùng nhau kết nối</p>
+    </div>
+
+    <!-- Card -->
+    <div class="w-full mt-4 bg-white rounded-2xl shadow-md p-5">
+      <!-- Switch -->
+      <div class="flex mb-4 bg-gray-100 rounded-xl p-1">
+        <button
+          type="button"
+          (click)="showLoginForm()"
+          class="flex-1 py-2 text-sm font-semibold rounded-lg transition"
+          [class.bg-white]="mode() === 'login'"
+          [class.text-orange-600]="mode() === 'login'"
+          [class.shadow-sm]="mode() === 'login'"
+          [class.text-gray-500]="mode() !== 'login'"
+        >
+          Đăng nhập
+        </button>
+
+        <button
+          type="button"
+          (click)="showRegisterForm()"
+          class="flex-1 py-2 text-sm font-semibold rounded-lg transition"
+          [class.bg-white]="mode() === 'register'"
+          [class.text-orange-600]="mode() === 'register'"
+          [class.shadow-sm]="mode() === 'register'"
+          [class.text-gray-500]="mode() !== 'register'"
+        >
+          Đăng ký
+        </button>
+      </div>
+
+      <!-- Form -->
+      <div class="mt-2">
+        @if (mode() === 'login') {
+        <app-login-form (success)="onLoginSuccess()"></app-login-form>
+        } @else if (mode() === 'register') {
+        <app-register-form (success)="onRegisterSuccess()"></app-register-form>
+        }
+      </div>
+    </div>
+
+    <p class="text-xs text-gray-500 mt-2">
+      Bạn cần hỗ trợ?
+      <a href="/support" class="text-orange-600 hover:text-orange-700 font-medium">Liên hệ</a>
+    </p>
+  </div>
+</div>

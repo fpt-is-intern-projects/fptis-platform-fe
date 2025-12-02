@@ -1,0 +1,54 @@
+<div class="flex items-center justify-between px-4 py-3">
+  <!-- Summary -->
+  <div class="text-sm">
+    Hiển thị
+    <span class="font-semibold">
+      {{ currentPage * size + 1 }}
+    </span>
+    đến
+    <span class="font-semibold">
+      {{ min((currentPage + 1) * size, totalElements) }}
+    </span>
+    trên tổng
+    <span class="font-semibold">{{ totalElements }}</span>
+    kết quả
+  </div>
+
+  <!-- Pagination buttons -->
+  <div class="flex items-center gap-2">
+    <!-- Previous -->
+    <button
+      class="px-3 py-1 border rounded bg-white disabled:opacity-50"
+      [disabled]="currentPage === 0"
+      (click)="changePage(currentPage - 1)"
+    >
+      Trước
+    </button>
+
+    <!-- Page numbers -->
+    @for (p of pages; track p) { @if (p === '...') {
+    <span class="px-2 text-gray-400">...</span>
+
+    } @else {
+    <button
+      class="px-3 py-1 border rounded"
+      [ngClass]="{
+        'bg-orange-500 text-white': p === currentPage,
+        'bg-white text-gray-700': p !== currentPage
+      }"
+      (click)="changePage(p)"
+    >
+      {{ displayPage(p) }}
+    </button>
+    } }
+
+    <!-- Next -->
+    <button
+      class="px-3 py-1 border rounded bg-white disabled:opacity-50"
+      [disabled]="currentPage === totalPages - 1"
+      (click)="changePage(currentPage + 1)"
+    >
+      Sau
+    </button>
+  </div>
+</div>

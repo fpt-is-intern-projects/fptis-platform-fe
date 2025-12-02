@@ -1,0 +1,38 @@
+<header class="w-full bg-gradient-to-r from-orange-600 to-orange-500 text-white shadow-lg">
+  <div class="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
+    <!-- Logo -->
+    <div class="flex items-center gap-3">
+      <img src="FPT-IS-logo.svg" alt="FPT IS" class="h-12" />
+    </div>
+
+    <!-- Nav -->
+    <nav class="flex items-center gap-6">
+      <a
+        routerLink="/"
+        class="text-white hover:text-orange-100 transition-colors duration-200 font-medium"
+      >
+        Trang chủ
+      </a>
+      <a
+        routerLink="/about"
+        class="text-white hover:text-orange-100 transition-colors duration-200 font-medium"
+      >
+        Giới thiệu
+      </a>
+
+      <!-- Nếu chưa login -->
+      @if (!auth.isLoggedIn()) {
+      <button
+        class="px-6 py-2.5 bg-white text-orange-600 rounded-lg hover:bg-orange-50 transition-all duration-200 font-semibold shadow-md hover:shadow-lg"
+      >
+        Đăng nhập
+      </button>
+      }
+
+      <!-- Nếu đã login: dùng UserMenu -->
+      @if (auth.isLoggedIn()) {
+      <app-user-menu></app-user-menu>
+      }
+    </nav>
+  </div>
+</header>

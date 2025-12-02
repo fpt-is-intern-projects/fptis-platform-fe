@@ -1,0 +1,18 @@
+<div class="relative">
+  <button
+    (click)="toggle()"
+    class="h-10 w-10 rounded-full bg-white text-orange-600 font-bold flex items-center justify-center shadow"
+  >
+    {{ avatar }}
+  </button>
+
+  @if (menuOpen()) {
+  <div
+    class="absolute right-0 mt-2 w-40 bg-white text-gray-800 rounded-lg shadow-lg border border-gray-200"
+  >
+    <button class="w-full text-left px-4 py-2 hover:bg-gray-100" (click)="logout()">
+      Đăng xuất
+    </button>
+  </div>
+  }
+</div>

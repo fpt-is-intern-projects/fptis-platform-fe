@@ -1,0 +1,44 @@
+<div
+  class="bg-white border-b border-orange-200 px-6 py-4 flex justify-between items-center shadow-sm"
+>
+  <h2 class="text-2xl font-bold text-orange-600">Nhật ký công việc</h2>
+
+  <button
+    class="px-4 py-2.5 bg-orange-500 text-white font-medium rounded-lg hover:bg-orange-600 transition-colors shadow-md hover:shadow-lg flex items-center gap-2"
+    (click)="openCreate()"
+  >
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+    </svg>
+    Tạo nhật ký
+  </button>
+</div>
+
+<div class="p-6">
+  <daily-log-table
+    [data]="data()"
+    (edit)="openUpdate($event)"
+    (delete)="delete($event)"
+  ></daily-log-table>
+
+  <app-pagination
+    class="mt-6"
+    [currentPage]="page()"
+    [totalPages]="totalPages()"
+    [totalElements]="totalElements()"
+    (currentPageChange)="page.set($event); load()"
+  ></app-pagination>
+</div>
+
+@if (showCreate()) {
+<daily-log-dialog title="Tạo nhật ký" (close)="showCreate.set(false)">
+  <daily-log-create-form (submitForm)="create($event)"></daily-log-create-form>
+</daily-log-dialog>
+} @if (showUpdate()) {
+<daily-log-dialog title="Cập nhật nhật ký" (close)="showUpdate.set(false)">
+  <daily-log-update-form
+    [initial]="selected()"
+    (submitForm)="update($event)"
+  ></daily-log-update-form>
+</daily-log-dialog>
+}
