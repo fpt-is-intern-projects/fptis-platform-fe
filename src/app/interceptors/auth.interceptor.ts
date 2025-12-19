@@ -2,7 +2,7 @@ import type { HttpInterceptorFn } from '@angular/common/http';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { catchError, switchMap, throwError, from, tap, map } from 'rxjs';
+import { catchError, switchMap, throwError, from, tap, map, finalize } from 'rxjs';
 import { jwtDecode } from 'jwt-decode';
 import { UserService } from '../services/user.service';
 import type { ApiResponse as ApiResponseModel } from '../models/api-response.model';
@@ -27,6 +27,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     req.url.includes('/login') || req.url.includes('/register') || req.url.includes('/refresh');
 
   let newReq = req;
+
   if (token && !isAuthEndpoint) {
     newReq = req.clone({
       setHeaders: {
@@ -34,7 +35,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       },
       withCredentials: true,
     });
-  } else if (isAuthEndpoint) {
+  } else {
     newReq = req.clone({
       withCredentials: true,
     });
@@ -58,18 +59,20 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
               return event.clone({ body: modifiedBody });
             }
           } catch (e) {
-            console.error('Failed to decode token:', e);
+            console.error('[FPS IS] Failed to decode token:', e);
           }
         }
       }
       return event;
     }),
+
     tap((event: any) => {
       if (event instanceof HttpResponse && event.body?.code === 1012) {
-        console.log('Token expired (code 1012) in response body, throwing error...');
-        throw event.body;
+        console.warn('[FPS IS] Token expired (code 1012) in response body, triggering refresh...');
+        throw { status: 401, error: event.body };
       }
     }),
+
     catchError((error: any) => {
       const isTokenExpired =
         (error instanceof HttpErrorResponse && error.status === 401) ||
@@ -77,10 +80,21 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         (error instanceof HttpErrorResponse && error.error?.code === 1012);
 
       if (isTokenExpired) {
-        console.log('Token expired, attempting refresh...');
+        // --- TRƯỜNG HỢP 1: LỖI XẢY RA TẠI CHÍNH ENDPOINT REFRESH ---
+        // Nếu đã gọi refresh mà vẫn trả về 401/1012 => Refresh Token cũng hết hạn => Logout
+        if (req.url.includes('/refresh')) {
+          console.error('[FPS IS] Refresh token is invalid or expired. Force logging out...');
+          isRefreshing = false;
+          refreshQueue = [];
+          localStorage.removeItem('access_token');
+          router.navigate(['/auth/login']);
+          return throwError(() => error);
+        }
 
+        // --- TRƯỜNG HỢP 2: ĐANG TRONG QUÁ TRÌNH REFRESH ---
+        // Nếu có request khác đến trong khi đang refresh, đưa vào hàng đợi
         if (isRefreshing) {
-          console.log('Refresh in progress, queueing request...');
+          console.log('[FPS IS] Refresh in progress, queueing request:', req.url);
           return from(
             new Promise<void>((resolve) => {
               refreshQueue.push(() => resolve());
@@ -88,51 +102,49 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
           ).pipe(
             switchMap(() => {
               const retryToken = localStorage.getItem('access_token');
-              const retryReq = req.clone({
-                setHeaders: {
-                  Authorization: `Bearer ${retryToken}`,
-                },
-                withCredentials: true,
-              });
-              return next(retryReq);
+              return next(
+                req.clone({
+                  setHeaders: { Authorization: `Bearer ${retryToken}` },
+                  withCredentials: true,
+                })
+              );
             })
           );
         }
 
+        // --- TRƯỜNG HỢP 3: BẮT ĐẦU QUÁ TRÌNH REFRESH ---
+        console.log('[FPS IS] Access token expired, attempting to refresh...');
         isRefreshing = true;
 
         return userService.refresh().pipe(
           switchMap((response: ApiResponseModel<string>) => {
-            console.log('Token refresh successful');
+            console.log('[FPS IS] Token refresh successful');
 
             localStorage.setItem('access_token', response.result);
+            isRefreshing = false;
 
             refreshQueue.forEach((callback) => callback());
             refreshQueue = [];
-            isRefreshing = false;
 
-            const retryReq = req.clone({
-              setHeaders: {
-                Authorization: `Bearer ${response.result}`,
-              },
-              withCredentials: true,
-            });
-            return next(retryReq);
+            return next(
+              req.clone({
+                setHeaders: { Authorization: `Bearer ${response.result}` },
+                withCredentials: true,
+              })
+            );
           }),
           catchError((refreshError) => {
-            console.log('Token refresh failed, logging out...');
-
-            refreshQueue = [];
+            console.error('[FPS IS] Token refresh failed technical error, logging out...');
             isRefreshing = false;
-
+            refreshQueue = [];
             localStorage.removeItem('access_token');
             router.navigate(['/auth/login']);
-
             return throwError(() => refreshError);
           })
         );
       }
 
+      // Các lỗi khác không liên quan đến Token
       return throwError(() => error);
     })
   );
