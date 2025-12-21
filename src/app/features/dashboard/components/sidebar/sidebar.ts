@@ -14,16 +14,10 @@ interface MenuItem {
   imports: [RouterLink, RouterLinkActive],
   templateUrl: './sidebar.html',
 })
-export class Sidebar implements OnInit {
+export class Sidebar {
   private auth = inject(AuthStateService);
 
   collapsed = signal(false);
-
-  ngOnInit() {
-    console.log('[FPT IS] Sidebar initialized');
-    console.log('[FPT IS] Auth service:', this.auth);
-    console.log('[FPT IS] Current user on init:', this.auth.currentUser());
-  }
 
   toggle() {
     this.collapsed.update((v) => !v);
@@ -46,14 +40,9 @@ export class Sidebar implements OnInit {
     const user = this.auth.currentUser();
     const userRoles = user?.roles || [];
 
-    console.log('[FPT IS] Current user in sidebar:', user);
-    console.log('[FPT IS] User roles:', userRoles);
-    console.log('[FPT IS] Has USERS_VIEW role:', userRoles.includes('USERS_VIEW'));
-
     return this.allMenuItems.filter((item) => {
       if (!item.requiredRole) return true;
       const hasRole = userRoles.includes(item.requiredRole);
-      console.log(`[FPT IS] Menu item "${item.label}" requires "${item.requiredRole}":`, hasRole);
       return hasRole;
     });
   });

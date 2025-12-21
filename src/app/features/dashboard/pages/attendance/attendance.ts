@@ -52,6 +52,8 @@ export class Attendance implements OnInit, OnDestroy {
       month: 'long',
       day: 'numeric',
     });
+
+    this.cdr.detectChanges();
   }
 
   loadCurrentAttendance() {
