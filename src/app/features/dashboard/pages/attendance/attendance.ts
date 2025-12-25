@@ -44,8 +44,16 @@ export class Attendance implements OnInit, OnDestroy {
   pieSeries: ApexNonAxisChartSeries = [];
   pieLabels: string[] = [];
 
-  // ApexCharts Config
   pieChart: ApexChart = { type: 'pie', width: 320 };
+  piePlotOptions: ApexPlotOptions = {
+    pie: {
+      dataLabels: {
+        offset: -15,
+        minAngleToShowLabel: 10,
+      },
+      expandOnClick: true,
+    },
+  };
   pieDataLabels: ApexDataLabels = {
     enabled: true,
     formatter: (val: number) => val.toFixed(1) + '%',

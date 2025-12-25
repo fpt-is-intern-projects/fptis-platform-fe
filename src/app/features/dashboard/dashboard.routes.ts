@@ -53,4 +53,13 @@ export const DASHBOARD_ROUTES: Routes = [
     loadComponent: () =>
       import('./pages/users-management/users-management').then((m) => m.UsersManagement),
   },
+  {
+    path: 'processes',
+    loadComponent: () => import('./pages/process-list/process-list').then((m) => m.ProcessList),
+  },
+  {
+    path: 'processes/:code',
+    loadComponent: () =>
+      import('./pages/process-management/process-management').then((m) => m.ProcessManagement),
+  },
 ];

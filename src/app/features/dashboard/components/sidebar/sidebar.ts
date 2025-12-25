@@ -9,6 +9,12 @@ interface MenuItem {
   requiredRole?: string;
 }
 
+interface MenuSection {
+  title: string;
+  items: MenuItem[];
+  requiredRole?: string;
+}
+
 @Component({
   selector: 'dashboard-sidebar',
   standalone: true,
@@ -24,32 +30,58 @@ export class Sidebar {
     this.collapsed.update((v) => !v);
   }
 
-  allMenuItems: MenuItem[] = [
-    { icon: 'home', label: 'Trang Chính', href: 'main' },
-    { icon: 'clock', label: 'Chấm Công', href: 'attendance' },
-    { icon: 'document', label: 'Nhật Ký', href: 'work-log' },
-    { icon: 'briefcase', label: 'Yêu Cầu Làm Việc', href: 'work-request' },
+  allMenuSections: MenuSection[] = [
     {
-      icon: 'check-circle',
-      label: 'Duyệt yêu cầu',
-      href: 'work-request-manager',
-      requiredRole: 'ROLE_MENTOR',
+      title: 'BÌNH THƯỜNG',
+      items: [
+        { icon: 'home', label: 'Trang Chủ', href: 'main' },
+        { icon: 'clock', label: 'Chấm Công', href: 'attendance' },
+        { icon: 'document', label: 'Nhật Ký', href: 'work-log' },
+        { icon: 'briefcase', label: 'Yêu Cầu Làm Việc', href: 'work-request' },
+      ],
     },
     {
-      icon: 'users',
-      label: 'Quản lý người dùng',
-      href: 'users-management',
-      requiredRole: 'USERS_VIEW',
+      title: 'HỒ SƠ',
+      items: [
+        { icon: 'id-card', label: 'Thông Tin Người Dùng', href: 'user-profile' },
+        { icon: 'chart-bar', label: 'Tiến Độ Thực Tập', href: 'internship-progress' },
+      ],
+    },
+    {
+      title: 'QUẢN LÝ NGƯỜI DÙNG',
+      requiredRole: 'ROLE_MENTOR',
+      items: [
+        { icon: 'users', label: 'Quản Lý Người Dùng', href: 'users-management' },
+        { icon: 'shield-check', label: 'Phân Quyền', href: 'role-management' },
+        { icon: 'clipboard-check', label: 'Duyệt Yêu Cầu Làm Việc', href: 'work-request-manager' },
+      ],
+    },
+    {
+      title: 'QUẢN LÝ QUY TRÌNH',
+      requiredRole: 'ROLE_MENTOR',
+      items: [
+        { icon: 'rocket', label: 'Quy Trình Triển Khai', href: 'deployment-process' },
+        { icon: 'cog', label: 'Quản Lý Quy Trình', href: 'processes' },
+      ],
     },
   ];
 
-  menuItems = computed(() => {
+  menuSections = computed(() => {
     const user = this.auth.currentUser();
     const userRoles = user?.roles || [];
 
-    return this.allMenuItems.filter((item) => {
-      if (!item.requiredRole) return true;
-      return userRoles.includes(item.requiredRole);
-    });
+    return this.allMenuSections
+      .filter((section) => {
+        if (!section.requiredRole) return true;
+        return userRoles.includes(section.requiredRole);
+      })
+      .map((section) => ({
+        ...section,
+        items: section.items.filter((item) => {
+          if (!item.requiredRole) return true;
+          return userRoles.includes(item.requiredRole);
+        }),
+      }))
+      .filter((section) => section.items.length > 0);
   });
 }
