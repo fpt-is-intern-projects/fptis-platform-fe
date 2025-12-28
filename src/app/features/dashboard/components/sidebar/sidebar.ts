@@ -32,7 +32,7 @@ export class Sidebar {
 
   allMenuSections: MenuSection[] = [
     {
-      title: 'BÌNH THƯỜNG',
+      title: 'CHUNG',
       items: [
         { icon: 'home', label: 'Trang Chủ', href: 'main' },
         { icon: 'clock', label: 'Chấm Công', href: 'attendance' },
@@ -41,26 +41,19 @@ export class Sidebar {
       ],
     },
     {
-      title: 'HỒ SƠ',
+      title: 'NGƯỜI DÙNG',
       items: [
-        { icon: 'id-card', label: 'Thông Tin Người Dùng', href: 'user-profile' },
+        { icon: 'id-card', label: 'Hồ sơ cá nhân', href: 'user-profile' },
         { icon: 'chart-bar', label: 'Tiến Độ Thực Tập', href: 'internship-progress' },
       ],
     },
     {
-      title: 'QUẢN LÝ NGƯỜI DÙNG',
+      title: 'QUẢN LÝ',
       requiredRole: 'ROLE_MENTOR',
       items: [
         { icon: 'users', label: 'Quản Lý Người Dùng', href: 'users-management' },
         { icon: 'shield-check', label: 'Phân Quyền', href: 'role-management' },
         { icon: 'clipboard-check', label: 'Duyệt Yêu Cầu Làm Việc', href: 'work-request-manager' },
-      ],
-    },
-    {
-      title: 'QUẢN LÝ QUY TRÌNH',
-      requiredRole: 'ROLE_MENTOR',
-      items: [
-        { icon: 'rocket', label: 'Quy Trình Triển Khai', href: 'deployment-process' },
         { icon: 'cog', label: 'Quản Lý Quy Trình', href: 'processes' },
       ],
     },

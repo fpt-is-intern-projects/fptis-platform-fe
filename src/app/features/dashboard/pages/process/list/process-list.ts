@@ -2,10 +2,13 @@ import { Component, type OnInit, ChangeDetectorRef, inject } from '@angular/core
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { ProcessManagementService } from '../../../../services/process-management.service';
-import type { ApiResponse } from '../../../../models/api-response.model';
-import { parseProcessFile } from '../../../../utils/process-parser.utils';
-import { ProcessDefinitionResponse, ProcessDeployRequest } from '../../../../models/proccess.model';
+import {
+  ProcessDefinitionResponse,
+  ProcessDeployRequest,
+} from '../../../../../models/proccess.model';
+import { ProcessManagementService } from '../../../../../services/process-management.service';
+import { ApiResponse } from '../../../../../models/api-response.model';
+import { parseProcessFile } from '../../../../../utils/process-parser.utils';
 
 @Component({
   selector: 'app-process-list',
@@ -69,8 +72,9 @@ export class ProcessList implements OnInit {
     this.cdr.detectChanges();
   }
 
-  viewDetail(processCode: string) {
-    this.router.navigate(['/dashboard/processes', processCode]);
+  viewDetail(process: ProcessDefinitionResponse) {
+    const subPath = process.resourceType === 'BPMN' ? 'bpmn' : 'dmn';
+    this.router.navigate(['/dashboard/processes', process.processCode, subPath]);
   }
 
   openDeployModal() {

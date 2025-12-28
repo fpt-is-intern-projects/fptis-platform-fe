@@ -1,60 +1,69 @@
 import { Component, type OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
-import { ProcessManagementService } from '../../../../services/process-management.service';
-import type { ApiResponse } from '../../../../models/api-response.model';
-import { ProcessTaskResponse } from '../../../../models/proccess.model';
+import { ActivatedRoute, Router } from '@angular/router';
+import { ProcessManagementService } from '../../../../../services/process-management.service';
+import {
+  ProcessDefinitionResponse,
+  ProcessTaskResponse,
+} from '../../../../../models/proccess.model';
+import { ApiResponse } from '../../../../../models/api-response.model';
 
-type TabType = 'status' | 'diagram' | 'dmn' | 'settings';
+type TabType = 'status' | 'diagram' | 'settings';
 
 @Component({
-  selector: 'app-process-management',
+  selector: 'app-bpmn-management',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './process-management.html',
+  templateUrl: './bpmn-management.html',
 })
-export class ProcessManagement implements OnInit {
+export class BpmnManagement implements OnInit {
   private processService = inject(ProcessManagementService);
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
 
-  // Tab state
   activeTab: TabType = 'status';
-
   processName = '';
   processCode = '';
   isProcessActive = true;
 
-  // Tasks data
   tasks: ProcessTaskResponse[] = [];
   filteredTasks: ProcessTaskResponse[] = [];
+
   searchTerm = '';
   isLoading = false;
 
-  // Modal states
-  showDeployModal = false;
   showEditDrawer = false;
   editingTask: ProcessTaskResponse | null = null;
   editActiveTab: 'permissions' | 'buttons' = 'permissions';
 
-  // Deploy form
-  deployForm: any = {
-    name: '',
-    processCode: '',
-    camundaProcessKey: '',
-    description: '',
-  };
-  uploadedFile: File | null = null;
-
-  constructor() // private cdr: ChangeDetectorRef, // private processService: ProcessManagementService,
-  {}
-
   ngOnInit() {
     this.route.params.subscribe((params) => {
       this.processCode = params['code'];
-      console.log('[FPT IS] Loading process detail for code:', this.processCode);
-      this.loadTasks();
+      console.log('[FPT IS] Loading BPMN process:', this.processCode);
+      this.loadProcessDefinition();
+    });
+  }
+
+  loadProcessDefinition() {
+    this.isLoading = true;
+    this.processService.getAllProcesses().subscribe({
+      next: (response: ApiResponse<ProcessDefinitionResponse[]>) => {
+        const process = response.result.find((p) => p.processCode === this.processCode);
+        if (process) {
+          this.processName = process.name;
+          this.isProcessActive = process.status === 'ACTIVE';
+          this.loadTasks();
+        }
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.log('[FPT IS] Error loading process definition:', error);
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      },
     });
   }
 
@@ -75,12 +84,10 @@ export class ProcessManagement implements OnInit {
     });
   }
 
-  // Tab navigation
   setActiveTab(tab: TabType) {
     this.activeTab = tab;
   }
 
-  // Search
   onSearch() {
     if (!this.searchTerm.trim()) {
       this.filteredTasks = this.tasks;
@@ -92,18 +99,14 @@ export class ProcessManagement implements OnInit {
     this.cdr.detectChanges();
   }
 
-  // Toggle task status
   toggleTaskStatus(task: ProcessTaskResponse) {
     task.isActive = !task.isActive;
     console.log('[FPT IS] Task status toggled:', task);
     this.cdr.detectChanges();
-    // TODO: Call API to update status
   }
 
-  // Actions
   viewTask(task: ProcessTaskResponse) {
     console.log('[FPT IS] View task:', task);
-    // TODO: Implement view logic
   }
 
   editTask(task: ProcessTaskResponse) {
@@ -116,57 +119,9 @@ export class ProcessManagement implements OnInit {
   deleteTask(task: ProcessTaskResponse) {
     if (confirm(`Bạn có chắc muốn xóa task "${task.taskName}"?`)) {
       console.log('[FPT IS] Delete task:', task);
-      // TODO: Call API to delete
     }
   }
 
-  // Deploy modal
-  openDeployModal() {
-    this.deployForm = {
-      name: '',
-      processCode: '',
-      camundaProcessKey: '',
-      description: '',
-    };
-    this.uploadedFile = null;
-    this.showDeployModal = true;
-  }
-
-  closeDeployModal() {
-    this.showDeployModal = false;
-  }
-
-  onFileSelected(event: Event) {
-    const input = event.target as HTMLInputElement;
-    if (input.files && input.files.length > 0) {
-      this.uploadedFile = input.files[0];
-    }
-  }
-
-  deployProcess() {
-    if (!this.uploadedFile) {
-      alert('Vui lòng chọn file BPMN/DMN');
-      return;
-    }
-
-    this.isLoading = true;
-    this.processService.deployProcess(this.deployForm, this.uploadedFile).subscribe({
-      next: (response: ApiResponse<string>) => {
-        console.log('[FPT IS] Deploy success:', response.result);
-        alert('Xuất quy trình thành công!');
-        this.closeDeployModal();
-        this.loadTasks();
-        this.isLoading = false;
-      },
-      error: (error) => {
-        console.log('[FPT IS] Deploy error:', error);
-        alert('Xuất quy trình thất bại!');
-        this.isLoading = false;
-      },
-    });
-  }
-
-  // Edit drawer
   closeEditDrawer() {
     this.showEditDrawer = false;
     this.editingTask = null;
@@ -178,7 +133,10 @@ export class ProcessManagement implements OnInit {
 
   saveTaskConfig() {
     console.log('[FPT IS] Save task config:', this.editingTask);
-    // TODO: Call API to save
     this.closeEditDrawer();
+  }
+
+  goBack() {
+    this.router.navigate(['/dashboard/processes']);
   }
 }
