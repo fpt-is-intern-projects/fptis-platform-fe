@@ -1,7 +1,7 @@
 import DmnModdle from 'dmn-moddle';
 
 export interface ParsedDmn {
-  decisionName: string;
+  decisionId: string;
   hitPolicy: string;
 }
 
@@ -22,7 +22,7 @@ export async function parseDmnMetadata(file: File): Promise<ParsedDmn> {
   const decisionTable = decisionElement.decisionTable;
 
   return {
-    decisionName: decisionElement.name || decisionElement.id,
+    decisionId: decisionElement.id,
     hitPolicy: decisionTable?.hitPolicy || 'UNIQUE',
   };
 }

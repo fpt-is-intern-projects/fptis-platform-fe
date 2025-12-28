@@ -1,10 +1,24 @@
-import { Component, type OnInit, ChangeDetectorRef, inject } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  ChangeDetectorRef,
+  inject,
+  ViewChild,
+  ElementRef,
+  ViewEncapsulation,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+
+// Modeler chính
+import DmnModeler from 'dmn-js/lib/Modeler';
+
 import { ProcessManagementService } from '../../../../../services/process-management.service';
 import {
   ProcessDefinitionResponse,
+  ProcessDeployRequest,
   ProcessVariableResponse,
 } from '../../../../../models/proccess.model';
 import { ApiResponse } from '../../../../../models/api-response.model';
@@ -16,27 +30,38 @@ type TabType = 'variables' | 'diagram' | 'settings';
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './dmn-management.html',
+  styleUrls: ['./dmn-management.scss'],
+  // Tắt encapsulation để các tùy chỉnh CSS cho bảng DMN có tác dụng ngay lập tức
+  encapsulation: ViewEncapsulation.None,
 })
-export class DmnManagement implements OnInit {
+export class DmnManagement implements OnInit, OnDestroy {
   private processService = inject(ProcessManagementService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
 
+  @ViewChild('dmnContainer', { static: false }) private dmnContainer!: ElementRef;
+
+  private dmnModeler: any;
   activeTab: TabType = 'variables';
   processName = '';
   processCode = '';
   isProcessActive = true;
-
   variables: ProcessVariableResponse[] = [];
   isLoading = false;
+  isDiagramLoaded = false;
 
   ngOnInit() {
     this.route.params.subscribe((params) => {
       this.processCode = params['code'];
-      console.log('[FPT IS] Loading DMN process:', this.processCode);
       this.loadProcessDefinition();
     });
+  }
+
+  ngOnDestroy() {
+    if (this.dmnModeler) {
+      this.dmnModeler.destroy();
+    }
   }
 
   loadProcessDefinition() {
@@ -52,8 +77,7 @@ export class DmnManagement implements OnInit {
         this.isLoading = false;
         this.cdr.detectChanges();
       },
-      error: (error) => {
-        console.log('[FPT IS] Error loading process definition:', error);
+      error: () => {
         this.isLoading = false;
         this.cdr.detectChanges();
       },
@@ -68,21 +92,86 @@ export class DmnManagement implements OnInit {
         this.isLoading = false;
         this.cdr.detectChanges();
       },
-      error: (error) => {
-        console.log('[FPT IS] Error loading variables:', error);
+      error: () => {
         this.isLoading = false;
         this.cdr.detectChanges();
       },
     });
   }
 
+  async loadDmnDiagram() {
+    if (this.isDiagramLoaded) return;
+    this.isLoading = true;
+
+    this.processService.getProcessXml(this.processCode).subscribe({
+      next: async (res: ApiResponse<string>) => {
+        if (!this.dmnModeler) {
+          this.dmnModeler = new DmnModeler({
+            container: this.dmnContainer.nativeElement,
+            keyboard: { bindTo: window },
+          });
+        }
+
+        try {
+          await this.dmnModeler.importXML(res.result);
+
+          // Mở view bảng quyết định (Decision Table) mặc định
+          const views = this.dmnModeler.getViews();
+          const tableView = views.find((v: any) => v.type === 'decisionTable');
+          if (tableView) {
+            await this.dmnModeler.open(tableView);
+          }
+
+          this.isDiagramLoaded = true;
+          this.isLoading = false;
+          this.cdr.detectChanges();
+        } catch (err) {
+          this.isLoading = false;
+          console.error('[FPT IS] Error loading DMN:', err);
+        }
+      },
+    });
+  }
+
+  async saveDiagram() {
+    try {
+      this.isLoading = true;
+      const { xml } = await this.dmnModeler.saveXML({ format: true });
+      const file = new File([xml], `${this.processCode}.dmn`, { type: 'application/xml' });
+
+      const request: ProcessDeployRequest = {
+        name: this.processName,
+        processCode: this.processCode,
+        resourceType: 'DMN',
+      };
+
+      this.processService.deployProcess(request, file).subscribe({
+        next: () => {
+          alert('Lưu sơ đồ quy trình thành công!');
+          this.loadVariables(); // Đồng bộ lại Tab 1
+          this.isLoading = false;
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          alert('Lỗi hệ thống khi lưu');
+          this.isLoading = false;
+        },
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   saveVariables() {
-    console.log('[FPT IS] Saving variables:', this.variables);
-    alert('Lưu tham số thành công!');
+    console.log('[FPT IS] Saving Default Values:', this.variables);
+    alert('Lưu tham số cấu hình thành công!');
   }
 
   setActiveTab(tab: TabType) {
     this.activeTab = tab;
+    if (tab === 'diagram') {
+      setTimeout(() => this.loadDmnDiagram(), 100);
+    }
   }
 
   goBack() {

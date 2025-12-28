@@ -33,6 +33,7 @@
     "@angular/router": "^21.0.0",
     "apexcharts": "^5.3.6",
     "bpmn-moddle": "^9.0.4",
+    "dmn-js": "^17.5.0",
     "dmn-moddle": "^11.0.0",
     "lottie-web": "^5.13.0",
     "ng-apexcharts": "^2.0.4",

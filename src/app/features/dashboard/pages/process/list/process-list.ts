@@ -96,23 +96,19 @@ export class ProcessList implements OnInit {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
       this.uploadedFile = input.files[0];
-      console.log('[FPT IS] File selected:', this.uploadedFile.name);
 
       try {
         const metadata = await parseProcessFile(this.uploadedFile);
 
-        this.deployForm.name = metadata.processName;
-        this.deployForm.processCode = metadata.processName.toUpperCase().replace(/\s+/g, '_');
+        this.deployForm.processCode = metadata.processCode;
         this.deployForm.resourceType = metadata.resourceType;
 
         this.isFormAutoFilled = true;
 
-        console.log('[FPT IS] Auto-filled form from file:', this.deployForm);
         this.cdr.detectChanges();
       } catch (error) {
-        console.error('[FPT IS] Error parsing process file:', error);
-        alert('Không thể đọc file. Vui lòng kiểm tra lại file BPMN/DMN.');
-        this.uploadedFile = null;
+        console.error('[FPT IS] Error parsing file:', error);
+        alert('File không hợp lệ!');
         this.isFormAutoFilled = false;
       }
     }

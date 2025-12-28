@@ -23,11 +23,21 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "**/*",
+                "input": "node_modules/dmn-js/dist/assets/dmn-font/font",
+                "output": "./font"
               }
             ],
             "styles": [
               "src/custom-theme.scss",
-              "src/styles.css"
+              "src/styles.css",
+              "node_modules/dmn-js/dist/assets/dmn-js-shared.css",
+              "node_modules/dmn-js/dist/assets/dmn-js-drd.css",
+              "node_modules/dmn-js/dist/assets/dmn-js-decision-table.css",
+              "node_modules/dmn-js/dist/assets/dmn-js-literal-expression.css",
+              "node_modules/dmn-js/dist/assets/dmn-font/css/dmn.css"
             ]
           },
           "configurations": {

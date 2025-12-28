@@ -13,6 +13,10 @@ export class ProcessManagementService {
   private http = inject(HttpClient);
   private api = 'http://localhost:8080/api/processes';
 
+  getProcessXml(processCode: string) {
+    return this.http.get<ApiResponse<string>>(`${this.api}/${processCode}/xml`);
+  }
+
   deployProcess(request: ProcessDeployRequest, file: File) {
     const formData = new FormData();
     formData.append('request', new Blob([JSON.stringify(request)], { type: 'application/json' }));

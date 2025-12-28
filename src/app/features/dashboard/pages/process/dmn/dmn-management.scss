@@ -1,0 +1,31 @@
+:host ::ng-deep {
+  .dmn-container {
+    width: 100%;
+    background-color: white;
+    .dmn-js-parent {
+      height: 100%;
+      width: 100%;
+    }
+  }
+
+  .properties-panel-parent {
+    font-family: 'Inter', sans-serif;
+    display: block !important;
+    height: 100% !important;
+    min-width: 320px !important; // Ép độ rộng tối thiểu
+    z-index: 10;
+    position: relative;
+
+    .bio-properties-panel {
+      height: 100% !important;
+      background-color: #f8fafc;
+      border: none;
+      visibility: visible !important;
+      display: block !important;
+
+      .bio-properties-panel-form {
+        display: block !important;
+      }
+    }
+  }
+}
