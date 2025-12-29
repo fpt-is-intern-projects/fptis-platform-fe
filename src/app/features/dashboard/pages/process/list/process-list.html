@@ -15,7 +15,7 @@
             d="M12 4v16m8-8H4"
           />
         </svg>
-        Xuất quy trình
+        Tải quy trình
       </button>
     </div>
     <p class="text-gray-600">Quản lý và cấu hình các quy trình nghiệp vụ</p>
@@ -179,7 +179,7 @@
   <!-- Deploy Modal -->
   <div
     *ngIf="showDeployModal"
-    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+    class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
     (click)="closeDeployModal()"
   >
     <div
@@ -188,14 +188,14 @@
     >
       <!-- Modal Header -->
       <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-        <h3 class="text-xl font-semibold text-gray-900">Xuất quy trình mới</h3>
+        <h3 class="text-xl font-semibold text-gray-900">Tải quy trình mới</h3>
         <button (click)="closeDeployModal()" class="text-gray-400 hover:text-gray-600">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               stroke-linecap="round"
               stroke-linejoin="round"
               stroke-width="2"
-              d="M6 18L18 6M6 6l12 12m0 0l-3-3m0 0l-3 3m3-3v12"
+              d="M6 18L18 6M6 6l12 12"
             />
           </svg>
         </button>
@@ -205,9 +205,18 @@
       <div class="px-6 py-4 space-y-4">
         <!-- File Upload -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">File BPMN/DMN *</label>
+          <label class="block text-sm font-medium text-gray-700 mb-2">File BPMN/DMN *</label>
+
+          <!-- Drop Zone -->
           <div
-            class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-orange-500 transition-colors"
+            #dropZone
+            (click)="fileInput.click()"
+            (dragover)="onDragOver($event)"
+            (dragleave)="onDragLeave($event)"
+            (drop)="onDrop($event)"
+            [class.border-orange-500]="isDragging"
+            [class.bg-orange-50]="isDragging"
+            class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-orange-400 hover:bg-gray-50 transition-all duration-200"
           >
             <input
               type="file"
@@ -216,13 +225,11 @@
               class="hidden"
               #fileInput
             />
-            <button
-              type="button"
-              (click)="fileInput.click()"
-              class="text-orange-600 hover:text-orange-700 font-medium"
-            >
+
+            <!-- No File Selected State -->
+            <div *ngIf="!uploadedFile" class="space-y-3">
               <svg
-                class="w-12 h-12 mx-auto mb-2 text-gray-400"
+                class="w-16 h-16 mx-auto text-gray-400"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -234,10 +241,74 @@
                   d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
                 />
               </svg>
-              <span *ngIf="!uploadedFile">Nhấn để chọn file</span>
-              <span *ngIf="uploadedFile" class="text-green-600">{{ uploadedFile.name }}</span>
-            </button>
-            <p class="text-xs text-gray-500 mt-2">Hỗ trợ: .bpmn, .dmn, .xml</p>
+              <div>
+                <p class="text-base font-medium text-gray-700">
+                  Nhấn để chọn file hoặc kéo thả vào đây
+                </p>
+                <p class="text-sm text-gray-500 mt-1">Hỗ trợ: .bpmn, .dmn, .xml (tối đa 10MB)</p>
+              </div>
+            </div>
+
+            <!-- File Selected State -->
+            <div *ngIf="uploadedFile" class="space-y-4">
+              <!-- File Icon & Info -->
+              <div class="flex items-center justify-center gap-4">
+                <div class="shrink-0">
+                  <div
+                    class="w-16 h-16 rounded-lg flex items-center justify-center"
+                    [ngClass]="{
+                      'bg-blue-100': uploadedFile.name.endsWith('.bpmn'),
+                      'bg-purple-100': uploadedFile.name.endsWith('.dmn'),
+                      'bg-gray-100': uploadedFile.name.endsWith('.xml')
+                    }"
+                  >
+                    <svg
+                      class="w-8 h-8"
+                      [ngClass]="{
+                        'text-blue-600': uploadedFile.name.endsWith('.bpmn'),
+                        'text-purple-600': uploadedFile.name.endsWith('.dmn'),
+                        'text-gray-600': uploadedFile.name.endsWith('.xml')
+                      }"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
+                    </svg>
+                  </div>
+                </div>
+                <div class="flex-1 text-left">
+                  <p class="text-sm font-semibold text-gray-900 truncate">
+                    {{ uploadedFile.name }}
+                  </p>
+                  <p class="text-xs text-gray-500 mt-0.5">
+                    {{ (uploadedFile.size / 1024).toFixed(2) }} KB
+                  </p>
+                </div>
+              </div>
+
+              <!-- Change File Button -->
+              <button
+                type="button"
+                (click)="$event.stopPropagation(); fileInput.click()"
+                class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-orange-600 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                  />
+                </svg>
+                Chọn file khác
+              </button>
+            </div>
           </div>
         </div>
 
@@ -296,7 +367,7 @@
           [disabled]="isLoading"
           class="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {{ isLoading ? 'Đang xử lý...' : 'Xuất quy trình' }}
+          {{ isLoading ? 'Đang xử lý...' : 'Tải quy trình' }}
         </button>
       </div>
     </div>

@@ -1,12 +1,11 @@
 import {
   Component,
   type OnInit,
-  OnDestroy,
+  type OnDestroy,
   ChangeDetectorRef,
   inject,
   ViewChild,
-  ElementRef,
-  ViewEncapsulation,
+  type ElementRef,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -15,12 +14,12 @@ import { ActivatedRoute, Router } from '@angular/router';
 import DmnModeler from 'dmn-js/lib/Modeler';
 
 import { ProcessManagementService } from '../../../../../services/process-management.service';
-import {
+import type {
   ProcessDefinitionResponse,
   ProcessDeployRequest,
   ProcessVariableResponse,
 } from '../../../../../models/proccess.model';
-import { ApiResponse } from '../../../../../models/api-response.model';
+import type { ApiResponse } from '../../../../../models/api-response.model';
 
 type TabType = 'variables' | 'diagram' | 'settings';
 
@@ -30,7 +29,6 @@ type TabType = 'variables' | 'diagram' | 'settings';
   imports: [CommonModule, FormsModule],
   templateUrl: './dmn-management.html',
   styleUrls: ['./dmn-management.scss'],
-  encapsulation: ViewEncapsulation.None,
 })
 export class DmnManagement implements OnInit, OnDestroy {
   private processService = inject(ProcessManagementService);
@@ -97,9 +95,7 @@ export class DmnManagement implements OnInit, OnDestroy {
     });
   }
 
-  // Cải tiến: Chỉ fetch và import XML một lần duy nhất
-  async loadDmnDiagram() {
-    if (this.isDiagramLoaded) return;
+  loadDmnDiagram(): void {
     this.isLoading = true;
 
     this.processService.getProcessXml(this.processCode).subscribe({
@@ -107,7 +103,6 @@ export class DmnManagement implements OnInit, OnDestroy {
         if (!this.dmnModeler) {
           this.dmnModeler = new DmnModeler({
             container: this.dmnContainer.nativeElement,
-            keyboard: { bindTo: window },
           });
         }
 
@@ -161,7 +156,6 @@ export class DmnManagement implements OnInit, OnDestroy {
 
   setActiveTab(tab: TabType) {
     this.activeTab = tab;
-    // Khi chuyển sang Tab diagram, nếu chưa load thì mới gọi load
     if (tab === 'diagram') {
       setTimeout(() => this.loadDmnDiagram(), 50);
     }

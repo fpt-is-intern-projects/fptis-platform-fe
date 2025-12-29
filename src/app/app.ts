@@ -1,7 +1,8 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, type OnInit, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { Header } from './shared/components/header/header';
 import { Footer } from './shared/components/footer/footer';
+import { AlertComponent } from './shared/components/alert/alert.component';
 import { AuthStateService } from './state/auth-state.service';
 import { AuthService } from './services/auth.service';
 import { lastValueFrom } from 'rxjs';
@@ -9,7 +10,7 @@ import { lastValueFrom } from 'rxjs';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, Header, Footer],
+  imports: [RouterOutlet, Header, Footer, AlertComponent],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })

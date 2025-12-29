@@ -25,3 +25,9 @@ export type ProcessVariableResponse = {
   displayName: string;
   dataType: string;
 };
+
+export type TaskPermissionRequest = {
+  processCode: string;
+  taskCode: string;
+  permissionRole: string;
+};

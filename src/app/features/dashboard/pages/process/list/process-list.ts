@@ -2,12 +2,12 @@ import { Component, type OnInit, ChangeDetectorRef, inject } from '@angular/core
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import {
+import type {
   ProcessDefinitionResponse,
   ProcessDeployRequest,
 } from '../../../../../models/proccess.model';
 import { ProcessManagementService } from '../../../../../services/process-management.service';
-import { ApiResponse } from '../../../../../models/api-response.model';
+import type { ApiResponse } from '../../../../../models/api-response.model';
 import { parseProcessFile } from '../../../../../utils/process-parser.utils';
 
 @Component({
@@ -35,6 +35,7 @@ export class ProcessList implements OnInit {
   };
   uploadedFile: File | null = null;
   isFormAutoFilled = false;
+  isDragging = false;
 
   ngOnInit() {
     this.loadProcesses();
@@ -92,10 +93,72 @@ export class ProcessList implements OnInit {
     this.showDeployModal = false;
   }
 
+  onDragOver(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging = true;
+  }
+
+  onDragLeave(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging = false;
+  }
+
+  async onDrop(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging = false;
+
+    const files = event.dataTransfer?.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+
+      // Validate file type
+      if (
+        !file.name.endsWith('.bpmn') &&
+        !file.name.endsWith('.dmn') &&
+        !file.name.endsWith('.xml')
+      ) {
+        alert('Chỉ chấp nhận file .bpmn, .dmn hoặc .xml');
+        return;
+      }
+
+      // Validate file size (10MB max)
+      if (file.size > 10 * 1024 * 1024) {
+        alert('File không được vượt quá 10MB');
+        return;
+      }
+
+      this.uploadedFile = file;
+
+      try {
+        const metadata = await parseProcessFile(this.uploadedFile);
+        this.deployForm.processCode = metadata.processCode;
+        this.deployForm.resourceType = metadata.resourceType;
+        this.isFormAutoFilled = true;
+        this.cdr.detectChanges();
+      } catch (error) {
+        console.error('[FPT IS] Error parsing file:', error);
+        alert('File không hợp lệ!');
+        this.isFormAutoFilled = false;
+      }
+    }
+  }
+
   async onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
-      this.uploadedFile = input.files[0];
+      const file = input.files[0];
+
+      // Validate file size (10MB max)
+      if (file.size > 10 * 1024 * 1024) {
+        alert('File không được vượt quá 10MB');
+        input.value = ''; // Reset input
+        return;
+      }
+
+      this.uploadedFile = file;
 
       try {
         const metadata = await parseProcessFile(this.uploadedFile);
@@ -129,7 +192,7 @@ export class ProcessList implements OnInit {
     this.processService.deployProcess(this.deployForm, this.uploadedFile).subscribe({
       next: (response: ApiResponse<string>) => {
         console.log('[FPT IS] Deploy success:', response.result);
-        alert('Xuất quy trình thành công!');
+        alert('Tải quy trình thành công!');
         this.closeDeployModal();
         this.loadProcesses();
         this.isLoading = false;
@@ -137,7 +200,7 @@ export class ProcessList implements OnInit {
       },
       error: (error) => {
         console.log('[FPT IS] Deploy error:', error);
-        alert('Xuất quy trình thất bại!');
+        alert('Tải quy trình thất bại!');
         this.isLoading = false;
         this.cdr.detectChanges();
       },

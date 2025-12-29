@@ -6,6 +6,7 @@ import {
   ProcessDeployRequest,
   ProcessTaskResponse,
   ProcessVariableResponse,
+  TaskPermissionRequest,
 } from '../models/proccess.model';
 
 @Injectable({ providedIn: 'root' })
@@ -36,5 +37,9 @@ export class ProcessManagementService {
 
   getAllProcesses() {
     return this.http.get<ApiResponse<ProcessDefinitionResponse[]>>(`${this.api}/all`);
+  }
+
+  updatePermission(data: TaskPermissionRequest) {
+    return this.http.put<ApiResponse<string>>(`${this.api}/tasks/permission`, data);
   }
 }

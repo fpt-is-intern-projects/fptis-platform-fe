@@ -3,11 +3,13 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ProcessManagementService } from '../../../../../services/process-management.service';
-import {
+import { AlertService } from '../../../../../services/alert.service';
+import type {
   ProcessDefinitionResponse,
   ProcessTaskResponse,
+  TaskPermissionRequest,
 } from '../../../../../models/proccess.model';
-import { ApiResponse } from '../../../../../models/api-response.model';
+import type { ApiResponse } from '../../../../../models/api-response.model';
 
 type TabType = 'status' | 'diagram' | 'settings';
 
@@ -22,6 +24,7 @@ export class BpmnManagement implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
+  private alertService = inject(AlertService);
 
   activeTab: TabType = 'status';
   processName = '';
@@ -50,6 +53,9 @@ export class BpmnManagement implements OnInit {
     this.isLoading = true;
     this.processService.getAllProcesses().subscribe({
       next: (response: ApiResponse<ProcessDefinitionResponse[]>) => {
+        if (response.message) {
+          this.alertService.error(response.message);
+        }
         const process = response.result.find((p) => p.processCode === this.processCode);
         if (process) {
           this.processName = process.name;
@@ -61,6 +67,7 @@ export class BpmnManagement implements OnInit {
       },
       error: (error) => {
         console.log('[FPT IS] Error loading process definition:', error);
+        this.alertService.error(error?.error?.message || 'Không thể tải thông tin quy trình');
         this.isLoading = false;
         this.cdr.detectChanges();
       },
@@ -71,6 +78,9 @@ export class BpmnManagement implements OnInit {
     this.isLoading = true;
     this.processService.getTasksByCode(this.processCode).subscribe({
       next: (response: ApiResponse<ProcessTaskResponse[]>) => {
+        if (response.message) {
+          this.alertService.error(response.message);
+        }
         this.tasks = response.result;
         this.filteredTasks = this.tasks;
         this.isLoading = false;
@@ -78,6 +88,7 @@ export class BpmnManagement implements OnInit {
       },
       error: (error) => {
         console.log('[FPT IS] Error loading tasks:', error);
+        this.alertService.error(error?.error?.message || 'Không thể tải danh sách task');
         this.isLoading = false;
         this.cdr.detectChanges();
       },
@@ -105,21 +116,11 @@ export class BpmnManagement implements OnInit {
     this.cdr.detectChanges();
   }
 
-  viewTask(task: ProcessTaskResponse) {
-    console.log('[FPT IS] View task:', task);
-  }
-
   editTask(task: ProcessTaskResponse) {
     this.editingTask = { ...task };
     this.showEditDrawer = true;
     this.editActiveTab = 'permissions';
     this.cdr.detectChanges();
-  }
-
-  deleteTask(task: ProcessTaskResponse) {
-    if (confirm(`Bạn có chắc muốn xóa task "${task.taskName}"?`)) {
-      console.log('[FPT IS] Delete task:', task);
-    }
   }
 
   closeEditDrawer() {
@@ -132,8 +133,42 @@ export class BpmnManagement implements OnInit {
   }
 
   saveTaskConfig() {
-    console.log('[FPT IS] Save task config:', this.editingTask);
-    this.closeEditDrawer();
+    if (!this.editingTask) return;
+
+    this.isLoading = true;
+
+    const request: TaskPermissionRequest = {
+      processCode: this.processCode,
+      taskCode: this.editingTask.taskCode,
+      permissionRole: this.editingTask.permission || '',
+    };
+
+    console.log('[FPT IS] Updating task permission:', request);
+
+    this.processService.updatePermission(request).subscribe({
+      next: (response: ApiResponse<string>) => {
+        console.log('[FPT IS] Permission updated successfully:', response);
+        if (response.message) {
+          this.alertService.error(response.message);
+        } else {
+          this.alertService.success('Cập nhật quyền thành công');
+        }
+        const taskIndex = this.tasks.findIndex((t) => t.taskCode === this.editingTask!.taskCode);
+        if (taskIndex !== -1) {
+          this.tasks[taskIndex] = { ...this.editingTask! };
+          this.onSearch();
+        }
+        this.closeEditDrawer();
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.log('[FPT IS] Error updating permission:', error);
+        this.alertService.error(error?.error?.message || 'Không thể cập nhật quyền');
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      },
+    });
   }
 
   goBack() {
