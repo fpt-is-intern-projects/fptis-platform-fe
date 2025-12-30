@@ -7,6 +7,7 @@ import {
   WorkRequestRequest,
   WorkRequestResponse,
 } from '../models/work-request.model';
+import { TaskCompleteRequest } from '../models/proccess.model';
 
 @Injectable({ providedIn: 'root' })
 export class WorkRequestService {
@@ -25,7 +26,7 @@ export class WorkRequestService {
     return this.http.get<ApiResponse<MentorTaskResponse[]>>(`${this.api}/mentor/work-requests`);
   }
 
-  completeTask(data: MentorReviewRequest) {
+  completeTask(data: TaskCompleteRequest) {
     return this.http.post<ApiResponse<string>>(`${this.api}/mentor/work-requests`, data);
   }
 }

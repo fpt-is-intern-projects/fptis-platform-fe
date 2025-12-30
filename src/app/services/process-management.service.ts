@@ -6,6 +6,7 @@ import {
   ProcessDeployRequest,
   ProcessTaskResponse,
   ProcessVariableResponse,
+  TaskActionsUpdateRequest,
   TaskPermissionRequest,
 } from '../models/proccess.model';
 
@@ -41,5 +42,9 @@ export class ProcessManagementService {
 
   updatePermission(data: TaskPermissionRequest) {
     return this.http.put<ApiResponse<string>>(`${this.api}/tasks/permission`, data);
+  }
+
+  updateActions(data: TaskActionsUpdateRequest) {
+    return this.http.put<ApiResponse<string>>(`${this.api}/tasks/actions`, data);
   }
 }

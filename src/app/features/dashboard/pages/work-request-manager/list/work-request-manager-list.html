@@ -2,7 +2,7 @@
   <div class="mb-10">
     <h1 class="text-4xl font-bold mb-3">
       <span class="text-gray-800">Quản Lý</span>
-      <span class="bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent">
+      <span class="bg-linear-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent">
         Duyệt Yêu Cầu
       </span>
     </h1>
@@ -89,18 +89,17 @@
         ></textarea>
 
         <div class="flex gap-3">
+          @for (btn of task.buttons; track btn.label) {
           <button
-            (click)="onReview(task.taskId, true)"
-            class="flex-1 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-lg shadow-green-100 transition-all active:scale-95"
+            (click)="handleAction(task.taskId, btn)"
+            [ngClass]="getButtonClass(btn.color)"
+            class="flex-1 py-3 font-bold rounded-xl transition-all active:scale-95"
           >
-            Chấp nhận
+            {{ btn.label }}
           </button>
-          <button
-            (click)="onReview(task.taskId, false)"
-            class="flex-1 py-3 bg-white border-2 border-red-600 text-red-600 hover:bg-red-50 font-bold rounded-xl transition-all active:scale-95"
-          >
-            Từ chối
-          </button>
+          } @empty {
+          <p class="text-gray-500 text-sm text-center w-full py-2">Không có nút hành động</p>
+          }
         </div>
       </div>
     </div>

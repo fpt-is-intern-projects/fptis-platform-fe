@@ -1,3 +1,5 @@
+import { ActionButtonResponse } from './proccess.model';
+
 export type MentorReviewRequest = {
   taskId: string;
   approved: boolean;
@@ -27,6 +29,8 @@ export type MentorTaskResponse = {
   onTimeRatio: number;
   earlyCheckoutRatio: number;
   systemNote: string;
+
+  buttons: ActionButtonResponse[];
 };
 
 export type WorkRequestResponse = {

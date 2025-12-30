@@ -8,8 +8,12 @@ import type {
   ProcessDefinitionResponse,
   ProcessTaskResponse,
   TaskPermissionRequest,
+  TaskActionsUpdateRequest,
+  ActionButtonResponse,
 } from '../../../../../models/proccess.model';
 import type { ApiResponse } from '../../../../../models/api-response.model';
+import { BUTTON_COLORS } from '../../../../../../constants/button-colors.constants';
+import { getColorBadgeClass } from '../../../../../utils/button-color.utils';
 
 type TabType = 'status' | 'diagram' | 'settings';
 
@@ -40,6 +44,17 @@ export class BpmnManagement implements OnInit {
   showEditDrawer = false;
   editingTask: ProcessTaskResponse | null = null;
   editActiveTab: 'permissions' | 'buttons' = 'permissions';
+
+  buttonColors = BUTTON_COLORS;
+  getColorBadgeClass = getColorBadgeClass;
+
+  // New button form state
+  newButton = {
+    label: '',
+    color: 'primary',
+    variableName: '',
+    value: '',
+  };
 
   ngOnInit() {
     this.route.params.subscribe((params) => {
@@ -110,26 +125,69 @@ export class BpmnManagement implements OnInit {
     this.cdr.detectChanges();
   }
 
-  toggleTaskStatus(task: ProcessTaskResponse) {
-    task.isActive = !task.isActive;
-    console.log('[FPT IS] Task status toggled:', task);
-    this.cdr.detectChanges();
-  }
-
   editTask(task: ProcessTaskResponse) {
-    this.editingTask = { ...task };
+    this.editingTask = { ...task, buttons: task.buttons || [] };
     this.showEditDrawer = true;
     this.editActiveTab = 'permissions';
+    this.resetNewButtonForm();
     this.cdr.detectChanges();
   }
 
   closeEditDrawer() {
     this.showEditDrawer = false;
     this.editingTask = null;
+    this.resetNewButtonForm();
   }
 
   setEditTab(tab: 'permissions' | 'buttons') {
     this.editActiveTab = tab;
+  }
+
+  addButton() {
+    if (!this.editingTask) return;
+
+    // Validate form
+    if (
+      !this.newButton.label.trim() ||
+      !this.newButton.variableName.trim() ||
+      !this.newButton.value.trim()
+    ) {
+      this.alertService.error('Vui lòng điền đầy đủ thông tin nút bấm');
+      return;
+    }
+
+    const button: ActionButtonResponse = {
+      label: this.newButton.label.trim(),
+      color: this.newButton.color,
+      variableName: this.newButton.variableName.trim(),
+      value: this.newButton.value.trim(),
+    };
+
+    if (!this.editingTask.buttons) {
+      this.editingTask.buttons = [];
+    }
+
+    this.editingTask.buttons.push(button);
+    this.resetNewButtonForm();
+    this.cdr.detectChanges();
+
+    console.log('[FPT IS] Button added:', button);
+  }
+
+  removeButton(index: number) {
+    if (!this.editingTask || !this.editingTask.buttons) return;
+    this.editingTask.buttons.splice(index, 1);
+    this.cdr.detectChanges();
+    console.log('[FPT IS] Button removed at index:', index);
+  }
+
+  resetNewButtonForm() {
+    this.newButton = {
+      label: '',
+      color: 'primary',
+      variableName: '',
+      value: '',
+    };
   }
 
   saveTaskConfig() {
@@ -137,38 +195,70 @@ export class BpmnManagement implements OnInit {
 
     this.isLoading = true;
 
-    const request: TaskPermissionRequest = {
-      processCode: this.processCode,
-      taskCode: this.editingTask.taskCode,
-      permissionRole: this.editingTask.permission || '',
-    };
+    if (this.editActiveTab === 'permissions') {
+      // Save permissions
+      const request: TaskPermissionRequest = {
+        processCode: this.processCode,
+        taskCode: this.editingTask.taskCode,
+        permissionRole: this.editingTask.permission || '',
+      };
 
-    console.log('[FPT IS] Updating task permission:', request);
+      console.log('[FPT IS] Updating task permission:', request);
 
-    this.processService.updatePermission(request).subscribe({
-      next: (response: ApiResponse<string>) => {
-        console.log('[FPT IS] Permission updated successfully:', response);
-        if (response.message) {
-          this.alertService.error(response.message);
-        } else {
-          this.alertService.success('Cập nhật quyền thành công');
-        }
-        const taskIndex = this.tasks.findIndex((t) => t.taskCode === this.editingTask!.taskCode);
-        if (taskIndex !== -1) {
-          this.tasks[taskIndex] = { ...this.editingTask! };
-          this.onSearch();
-        }
-        this.closeEditDrawer();
-        this.isLoading = false;
-        this.cdr.detectChanges();
-      },
-      error: (error) => {
-        console.log('[FPT IS] Error updating permission:', error);
-        this.alertService.error(error?.error?.message || 'Không thể cập nhật quyền');
-        this.isLoading = false;
-        this.cdr.detectChanges();
-      },
-    });
+      this.processService.updatePermission(request).subscribe({
+        next: (response: ApiResponse<string>) => {
+          this.handleSaveSuccess('Cập nhật quyền thành công', response);
+        },
+        error: (error) => {
+          this.handleSaveError(error);
+        },
+      });
+    } else {
+      // Save action buttons
+      const request: TaskActionsUpdateRequest = {
+        processCode: this.processCode,
+        taskCode: this.editingTask.taskCode,
+        buttons: this.editingTask.buttons || [],
+      };
+
+      console.log('[FPT IS] Updating task actions:', request);
+
+      this.processService.updateActions(request).subscribe({
+        next: (response: ApiResponse<string>) => {
+          this.handleSaveSuccess('Cấu hình nút bấm thành công', response);
+        },
+        error: (error) => {
+          this.handleSaveError(error);
+        },
+      });
+    }
+  }
+
+  private handleSaveSuccess(message: string, response: ApiResponse<string>) {
+    console.log('[FPT IS] Save successful:', response);
+    if (response.message) {
+      this.alertService.error(response.message);
+    } else {
+      this.alertService.success(message);
+    }
+
+    // Update task in list
+    const taskIndex = this.tasks.findIndex((t) => t.taskCode === this.editingTask!.taskCode);
+    if (taskIndex !== -1) {
+      this.tasks[taskIndex] = { ...this.editingTask! };
+      this.onSearch();
+    }
+
+    this.closeEditDrawer();
+    this.isLoading = false;
+    this.cdr.detectChanges();
+  }
+
+  private handleSaveError(error: any) {
+    console.log('[FPT IS] Error saving:', error);
+    this.alertService.error(error?.error?.message || 'Có lỗi xảy ra');
+    this.isLoading = false;
+    this.cdr.detectChanges();
   }
 
   goBack() {
